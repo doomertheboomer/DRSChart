@@ -184,148 +184,164 @@ public class drsParser : MonoBehaviour
     public GameObject skidL;
     public GameObject skidR;
 
+    public List<step> stepList;
+
+    public void renderStep(step step)
+    {
+        GameObject note = noteL; GameObject skid = skidL;
+        // if note is right/jump
+        if (step.kind == 2 || step.kind == 4)
+        {
+            note = noteR; skid = skidR;
+        }
+
+        // get note positions
+        float posX = (((((float)step.pos_left + (float)step.pos_right) / 2f) / 65536f) * 3f) - 1.5f; // get center of note. lane is from -1.5 to 1.5
+        float posY = ((float)step.stime_ms / 1000f) - 5f; // where to spawn the note. lane is from -5 to 5
+        float width = 0.1561097f * Mathf.Abs(((float)step.pos_left - (float)step.pos_right) / 65536f); // get width of note in percentage then multiplied by constant
+
+        // create step note object
+        GameObject noteInstance = Instantiate(note, new Vector3(posX, posY, step.kind), Quaternion.identity); // use note type as layering system
+        noteInstance.transform.localScale = new Vector3(width, 0.1084799f, 1.644383f);
+
+        // check if note is a long note and render all longs
+        if (step.category == 1 || step.long_point != null)
+        {
+            for (int i = 0; i < step.long_point.Count; i++)
+            {
+                point point = step.long_point[i];
+                // check if current point is skid or hold
+                if (point.isSkid)
+                {
+                    Debug.Log("spawning skid!!");
+
+                    // check for skid direction
+                    if (point.pos_lend > point.pos_left) // right
+                    {
+                        float skidX = (((((float)point.pos_left + (float)point.pos_rend) / 2f) / 65536f) * 3f) - 1.5f;
+                        float skidY = ((float)point.point_time / 1000) - 5;
+                        float skidW = 0.1561097f * Mathf.Abs(((float)point.pos_left - (float)point.pos_rend)) / 65536f;
+                        GameObject skidInstance = Instantiate(skid, new Vector3(skidX, skidY, 5), Quaternion.identity); // skids are always behind
+                        skidInstance.transform.localScale = new Vector3(skidW, 0.1084799f, 1.644383f);
+                    }
+                    else // left
+                    {
+                        float skidX = (((((float)point.pos_right + (float)point.pos_lend) / 2f) / 65536f) * 3f) - 1.5f;
+                        float skidY = ((float)point.point_time / 1000) - 5;
+                        float skidW = 0.1561097f * Mathf.Abs(((float)point.pos_right - (float)point.pos_lend)) / 65536f;
+                        GameObject skidInstance = Instantiate(skid, new Vector3(skidX, skidY, 5), Quaternion.identity); // skids are always behind
+                        skidInstance.transform.localScale = new Vector3(skidW, 0.1084799f, 1.644383f);
+                    }
+                    // render skid "stem"
+                    float stemX = (((((float)point.pos_left + (float)point.pos_right) / 2f) / 65536f) * 3f) - 1.5f;
+                    float stemY;
+                    float stemH;
+                    if (i == 0) // if its the first point, take the parent step as stem
+                    {
+                        stemY = ((((float)point.point_time + (float)step.stime_ms) / 2f) / 1000) - 5;
+                        stemH = ((float)point.point_time - (float)step.stime_ms) * 0.00128291f;
+                    }
+                    else
+                    {
+                        stemY = ((((float)point.point_time + (float)step.long_point[i - 1].point_time) / 2f) / 1000) - 5;
+                        stemH = ((float)point.point_time - (float)step.long_point[i - 1].point_time) * 0.00128291f;
+
+                    }
+
+                    float stemW = 0.1561097f * Mathf.Abs(((float)point.pos_left - (float)point.pos_right)) / 65536f;
+                    GameObject stemInstance = Instantiate(skid, new Vector3(stemX, stemY, 6), Quaternion.identity); // stems are always behind
+                    stemInstance.transform.localScale = new Vector3(stemW, stemH, 1.644383f);
+                }
+                else
+                {
+                    Debug.Log("spawning hold 1");
+
+                    // handling for holds, pretty difficult stuff will do later
+                    float startTime;
+                    float endTime;
+                    float startL;
+                    float startR;
+                    float endL;
+                    float endR;
+
+                    if (i == 0) // if its the first point, get parent step as starting pos
+                    {
+                        startTime = (float)step.stime_ms;
+                        startL = (float)step.pos_left;
+                        startR = (float)step.pos_right;
+                    }
+                    else // if its in the middle, get last point as starting pos
+                    {
+                        startTime = (float)step.long_point[i - 1].point_time;
+
+                        // use lend and rend for parent skid
+                        if (step.long_point[i - 1].isSkid)
+                        {
+                            startL = (float)step.long_point[i - 1].pos_lend;
+                            startR = (float)step.long_point[i - 1].pos_rend;
+                        }
+                        else
+                        {
+                            startL = (float)step.long_point[i - 1].pos_left;
+                            startR = (float)step.long_point[i - 1].pos_right;
+                        }
+                    }
+
+                    endL = (float)point.pos_left;
+                    endR = (float)point.pos_right;
+                    endTime = (float)point.point_time;
+                    // if its the last point, get parent step as ending time
+                    if (i == (step.long_point.Count - 1)) { endTime = (float)step.etime_ms; }
+
+                    // get L R position gradient
+                    //float lGrad = (endTime - startTime) / (endL - startL);
+                    //float rGrad = (endTime - startTime) / (endR - startR);
+
+                    float lGrad = (endL - startL) / (endTime - startTime);
+                    float rGrad = (endR - startR) / (endTime - startTime);
+                    Debug.Log("spawning hold 2");
+
+                    // spawn one note each 10ms for the illusion of a "drag"
+                    for (float j = startTime; j <= endTime; j += 10f)
+                    {
+                        Debug.Log("spawning hold 3");
+
+                        // calc L and R pos
+                        float left = startL + lGrad * (j - startTime);
+                        float right = startR + rGrad * (j - startTime);
+
+                        // code duplicated from step alg
+                        float holdX = ((((left + right) / 2f) / 65536f) * 3f) - 1.5f; // get center of note. lane is from -1.5 to 1.5
+                        float holdY = (j / 1000f) - 5f; // where to spawn the note. lane is from -5 to 5
+                        float holdWidth = 0.1561097f * Mathf.Abs((left - right) / 65536f); // get width of note in percentage then multiplied by constant
+
+                        GameObject holdInstance = Instantiate(skid, new Vector3(holdX, holdY, 5), Quaternion.identity); // holds are always behind
+                        holdInstance.transform.localScale = new Vector3(holdWidth, 0.1084799f, 1.644383f);
+                    }
+                }
+            }
+        }
+    }
+
+    public void renderSteps(List<step> input)
+    {
+        foreach (var step in input)
+        {
+            renderStep(step);
+        }
+    }
+
     // Start is called before the first frame update
     void Start()
     {
         string filePath = "chart.xml";
         XDocument xdoc = XDocument.Load(filePath);
 
-        //PrintAllElements(getSteps(xdoc)); 
+        stepList = getSteps(xdoc);
 
-        foreach (var step in (getSteps(xdoc)))
-        {
-            GameObject note = noteL; GameObject skid = skidL;
-            // if note is right/jump
-            if (step.kind == 2 || step.kind == 4)
-            {
-                note = noteR; skid = skidR;
-            }
+        renderSteps(stepList);
 
-            // get note positions
-            float posX = (((((float)step.pos_left + (float)step.pos_right) / 2f) / 65536f) * 3f) - 1.5f; // get center of note. lane is from -1.5 to 1.5
-            float posY = ((float)step.stime_ms / 1000f) - 5f; // where to spawn the note. lane is from -5 to 5
-            float width = 0.1561097f * Mathf.Abs(((float)step.pos_left - (float)step.pos_right) / 65536f); // get width of note in percentage then multiplied by constant
-
-            // create step note object
-            GameObject noteInstance = Instantiate(note, new Vector3(posX, posY, step.kind), Quaternion.identity); // use note type as layering system
-            noteInstance.transform.localScale = new Vector3(width, 0.1084799f, 1.644383f);
-
-            // check if note is a long note and render all longs
-            if (step.category == 1 || step.long_point != null)
-            {
-                for (int i = 0; i < step.long_point.Count; i++)
-                {
-                    point point = step.long_point[i];
-                    // check if current point is skid or hold
-                    if (point.isSkid)
-                    {
-                        Debug.Log("spawning skid!!");
-
-                        // check for skid direction
-                        if (point.pos_lend > point.pos_left) // right
-                        {
-                            float skidX = (((((float)point.pos_left + (float)point.pos_rend) / 2f) / 65536f) * 3f) - 1.5f;
-                            float skidY = ((float)point.point_time / 1000) - 5;
-                            float skidW = 0.1561097f * Mathf.Abs(((float)point.pos_left - (float)point.pos_rend)) / 65536f;
-                            GameObject skidInstance = Instantiate(skid, new Vector3(skidX, skidY, 5), Quaternion.identity); // skids are always behind
-                            skidInstance.transform.localScale = new Vector3(skidW, 0.1084799f, 1.644383f);
-                        }
-                        else // left
-                        {
-                            float skidX = (((((float)point.pos_right + (float)point.pos_lend) / 2f) / 65536f) * 3f) - 1.5f;
-                            float skidY = ((float)point.point_time / 1000) - 5;
-                            float skidW = 0.1561097f * Mathf.Abs(((float)point.pos_right - (float)point.pos_lend)) / 65536f;
-                            GameObject skidInstance = Instantiate(skid, new Vector3(skidX, skidY, 5), Quaternion.identity); // skids are always behind
-                            skidInstance.transform.localScale = new Vector3(skidW, 0.1084799f, 1.644383f);
-                        }
-                        // render skid "stem"
-                        float stemX = (((((float)point.pos_left + (float)point.pos_right) / 2f) / 65536f) * 3f) - 1.5f;
-                        float stemY;
-                        float stemH;
-                        if (i == 0) // if its the first point, take the parent step as stem
-                        {
-                            stemY = ((((float)point.point_time + (float)step.stime_ms) / 2f) / 1000) - 5;
-                            stemH = ((float)point.point_time - (float)step.stime_ms) * 0.00128291f;
-                        }
-                        else
-                        {
-                            stemY = ((((float)point.point_time + (float)step.long_point[i - 1].point_time) / 2f) / 1000) - 5;
-                            stemH = ((float)point.point_time - (float)step.long_point[i - 1].point_time) * 0.00128291f;
-
-                        }
-
-                        float stemW = 0.1561097f * Mathf.Abs(((float)point.pos_left - (float)point.pos_right)) / 65536f;
-                        GameObject stemInstance = Instantiate(skid, new Vector3(stemX, stemY, 6), Quaternion.identity); // stems are always behind
-                        stemInstance.transform.localScale = new Vector3(stemW, stemH, 1.644383f);
-                    }
-                    else
-                    {
-                        Debug.Log("spawning hold 1");
-
-                        // handling for holds, pretty difficult stuff will do later
-                        float startTime;
-                        float endTime;
-                        float startL;
-                        float startR;
-                        float endL;
-                        float endR;
-
-                        if (i == 0) // if its the first point, get parent step as starting pos
-                        {
-                            startTime = (float)step.stime_ms;
-                            startL = (float)step.pos_left;
-                            startR = (float)step.pos_right;
-                        } else // if its in the middle, get last point as starting pos
-                        {
-                            startTime = (float)step.long_point[i - 1].point_time;
-
-                            // use lend and rend for parent skid
-                            if (step.long_point[i - 1].isSkid)
-                            {
-                                startL = (float)step.long_point[i - 1].pos_lend;
-                                startR = (float)step.long_point[i - 1].pos_rend;
-                            } else
-                            {
-                                startL = (float)step.long_point[i - 1].pos_left;
-                                startR = (float)step.long_point[i - 1].pos_right;
-                            }
-                        }
-
-                        endL = (float)point.pos_left;
-                        endR = (float)point.pos_right;
-                        endTime = (float)point.point_time;
-                        // if its the last point, get parent step as ending time
-                        if (i == (step.long_point.Count - 1)) { endTime = (float)step.etime_ms; }
-
-                        // get L R position gradient
-                        //float lGrad = (endTime - startTime) / (endL - startL);
-                        //float rGrad = (endTime - startTime) / (endR - startR);
-
-                        float lGrad = (endL - startL) / (endTime - startTime);
-                        float rGrad = (endR - startR) / (endTime - startTime);
-                        Debug.Log("spawning hold 2");
-
-                        // spawn one note each 10ms for the illusion of a "drag"
-                        for (float j = startTime; j <= endTime; j += 10f)
-                        {
-                            Debug.Log("spawning hold 3");
-
-                            // calc L and R pos
-                            float left = startL + lGrad * (j - startTime);
-                            float right = startR + rGrad * (j - startTime);
-
-                            // code duplicated from step alg
-                            float holdX = ((((left + right) / 2f) / 65536f) * 3f) - 1.5f; // get center of note. lane is from -1.5 to 1.5
-                            float holdY = (j / 1000f) - 5f; // where to spawn the note. lane is from -5 to 5
-                            float holdWidth = 0.1561097f * Mathf.Abs((left - right) / 65536f); // get width of note in percentage then multiplied by constant
-
-                            GameObject holdInstance = Instantiate(skid, new Vector3(holdX, holdY, 5), Quaternion.identity); // holds are always behind
-                            holdInstance.transform.localScale = new Vector3(holdWidth, 0.1084799f, 1.644383f);
-                        }
-                    }
-                }
-            }
-        }
+        PrintAllElements(stepList);
     }
 
     // Update is called once per frame
