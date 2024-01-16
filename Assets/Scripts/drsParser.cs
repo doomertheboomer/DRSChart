@@ -188,6 +188,16 @@ public class drsParser : MonoBehaviour
 
     public void renderStep(step step)
     {
+        /*
+         * NOTE LAYERING SYSTEM:
+         * 1. L
+         * 2. R
+         * 3. Down
+         * 4. Jump
+         * 5. Skid/Hold heads
+         * 6. Skid/Hold paths
+        */
+
         GameObject note = noteL; GameObject skid = skidL;
         // if note is right/jump
         if (step.kind == 2 || step.kind == 4)
@@ -196,9 +206,9 @@ public class drsParser : MonoBehaviour
         }
 
         // get note positions
-        float posX = (((((float)step.pos_left + (float)step.pos_right) / 2f) / 65536f) * 3f) - 1.5f; // get center of note. lane is from -1.5 to 1.5
-        float posY = ((float)step.stime_ms / 1000f) - 5f; // where to spawn the note. lane is from -5 to 5
-        float width = 0.1561097f * Mathf.Abs(((float)step.pos_left - (float)step.pos_right) / 65536f); // get width of note in percentage then multiplied by constant
+        float posX = (((((float)step.pos_left + (float)step.pos_right) / 2f) / 65536f) * 3f) - 1.5f; // get center of note. lane is from -1.5 to 1.5 (simplified to y = (0.0000228882 * (step.pos_left + step.pos_right)) - 1.5)
+        float posY = ((float)step.stime_ms / 1000f) - 5f; // where to spawn the note. lane is from -5 to 5 (simplified to y = (0.001 * step.stime_ms) - 5
+        float width = 0.1561097f * Mathf.Abs(((float)step.pos_left - (float)step.pos_right) / 65536f); // get width of note in percentage then multiplied by constant (simplified to y = 0.00000238204498291 * width)
 
         // create step note object
         GameObject noteInstance = Instantiate(note, new Vector3(posX, posY, step.kind), Quaternion.identity); // use note type as layering system
@@ -213,29 +223,28 @@ public class drsParser : MonoBehaviour
                 // check if current point is skid or hold
                 if (point.isSkid)
                 {
-                    Debug.Log("spawning skid!!");
-
+                    float skidX, skidY, skidW;
                     // check for skid direction
                     if (point.pos_lend > point.pos_left) // right
                     {
-                        float skidX = (((((float)point.pos_left + (float)point.pos_rend) / 2f) / 65536f) * 3f) - 1.5f;
-                        float skidY = ((float)point.point_time / 1000) - 5;
-                        float skidW = 0.1561097f * Mathf.Abs(((float)point.pos_left - (float)point.pos_rend)) / 65536f;
-                        GameObject skidInstance = Instantiate(skid, new Vector3(skidX, skidY, 5), Quaternion.identity); // skids are always behind
-                        skidInstance.transform.localScale = new Vector3(skidW, 0.1084799f, 1.644383f);
+                        skidX = (((((float)point.pos_left + (float)point.pos_rend) / 2f) / 65536f) * 3f) - 1.5f;
+                        skidW = 0.1561097f * Mathf.Abs(((float)point.pos_left - (float)point.pos_rend)) / 65536f;
                     }
                     else // left
                     {
-                        float skidX = (((((float)point.pos_right + (float)point.pos_lend) / 2f) / 65536f) * 3f) - 1.5f;
-                        float skidY = ((float)point.point_time / 1000) - 5;
-                        float skidW = 0.1561097f * Mathf.Abs(((float)point.pos_right - (float)point.pos_lend)) / 65536f;
-                        GameObject skidInstance = Instantiate(skid, new Vector3(skidX, skidY, 5), Quaternion.identity); // skids are always behind
-                        skidInstance.transform.localScale = new Vector3(skidW, 0.1084799f, 1.644383f);
+                        skidX = (((((float)point.pos_right + (float)point.pos_lend) / 2f) / 65536f) * 3f) - 1.5f;
+                        skidW = 0.1561097f * Mathf.Abs(((float)point.pos_right - (float)point.pos_lend)) / 65536f;
                     }
+                    skidY = ((float)point.point_time / 1000) - 5;
+
+                    // spawn skid object
+                    GameObject skidInstance = Instantiate(skid, new Vector3(skidX, skidY, 5), Quaternion.identity); // skids are always behind
+                    skidInstance.transform.localScale = new Vector3(skidW, 0.1084799f, 1.644383f);
+                    skidInstance.transform.SetParent(noteInstance.transform);
+
                     // render skid "stem"
                     float stemX = (((((float)point.pos_left + (float)point.pos_right) / 2f) / 65536f) * 3f) - 1.5f;
-                    float stemY;
-                    float stemH;
+                    float stemY, stemH;
                     if (i == 0) // if its the first point, take the parent step as stem
                     {
                         stemY = ((((float)point.point_time + (float)step.stime_ms) / 2f) / 1000) - 5;
@@ -251,11 +260,10 @@ public class drsParser : MonoBehaviour
                     float stemW = 0.1561097f * Mathf.Abs(((float)point.pos_left - (float)point.pos_right)) / 65536f;
                     GameObject stemInstance = Instantiate(skid, new Vector3(stemX, stemY, 6), Quaternion.identity); // stems are always behind
                     stemInstance.transform.localScale = new Vector3(stemW, stemH, 1.644383f);
+                    stemInstance.transform.SetParent(skidInstance.transform);
                 }
                 else
                 {
-                    Debug.Log("spawning hold 1");
-
                     // handling for holds, pretty difficult stuff will do later
                     float startTime;
                     float endTime;
@@ -294,29 +302,33 @@ public class drsParser : MonoBehaviour
                     if (i == (step.long_point.Count - 1)) { endTime = (float)step.etime_ms; }
 
                     // get L R position gradient
-                    //float lGrad = (endTime - startTime) / (endL - startL);
-                    //float rGrad = (endTime - startTime) / (endR - startR);
-
                     float lGrad = (endL - startL) / (endTime - startTime);
                     float rGrad = (endR - startR) / (endTime - startTime);
-                    Debug.Log("spawning hold 2");
+
+                    // spawn hold head (final point). copied code from above
+                    float holdX = ((((endL + endR) / 2f) / 65536f) * 3f) - 1.5f; // get center of note. lane is from -1.5 to 1.5 (simplified to y = (0.0000228882 * (step.pos_left + step.pos_right)) - 1.5)
+                    float holdY = (endTime / 1000f) - 5f; // where to spawn the note. lane is from -5 to 5 (simplified to y = (0.001 * step.stime_ms) - 5
+                    float holdWidth = 0.1561097f * Mathf.Abs((endL - endR) / 65536f); // get width of note in percentage then multiplied by constant (simplified to y = 0.00000238204498291 * width)
+                   
+                    GameObject holdParent = Instantiate(note, new Vector3(holdX, holdY, 5), Quaternion.identity); // holds are always behind
+                    holdParent.transform.localScale = new Vector3(holdWidth, 0.1084799f, 1.644383f);
+                    holdParent.transform.SetParent(noteInstance.transform);
 
                     // spawn one note each 10ms for the illusion of a "drag"
                     for (float j = startTime; j <= endTime; j += 10f)
                     {
-                        Debug.Log("spawning hold 3");
-
                         // calc L and R pos
                         float left = startL + lGrad * (j - startTime);
                         float right = startR + rGrad * (j - startTime);
 
                         // code duplicated from step alg
-                        float holdX = ((((left + right) / 2f) / 65536f) * 3f) - 1.5f; // get center of note. lane is from -1.5 to 1.5
-                        float holdY = (j / 1000f) - 5f; // where to spawn the note. lane is from -5 to 5
-                        float holdWidth = 0.1561097f * Mathf.Abs((left - right) / 65536f); // get width of note in percentage then multiplied by constant
+                        holdX = ((((left + right) / 2f) / 65536f) * 3f) - 1.5f; // get center of note. lane is from -1.5 to 1.5
+                        holdY = (j / 1000f) - 5f; // where to spawn the note. lane is from -5 to 5
+                        holdWidth = 0.1561097f * Mathf.Abs((left - right) / 65536f); // get width of note in percentage then multiplied by constant
 
-                        GameObject holdInstance = Instantiate(skid, new Vector3(holdX, holdY, 5), Quaternion.identity); // holds are always behind
+                        GameObject holdInstance = Instantiate(skid, new Vector3(holdX, holdY, 6), Quaternion.identity); // holds are always behind
                         holdInstance.transform.localScale = new Vector3(holdWidth, 0.1084799f, 1.644383f);
+                        holdInstance.transform.SetParent(holdParent.transform);
                     }
                 }
             }

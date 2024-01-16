@@ -6,6 +6,7 @@ using UnityEngine;
 public class noteMover : MonoBehaviour
 {
     public bool isPoint;
+    public bool isSkid;
 
     // Start is called before the first frame update
     void Start()
