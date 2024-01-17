@@ -283,7 +283,7 @@ GameObject:
   - component: {fileID: 679037315}
   m_Layer: 0
   m_Name: noteL
-  m_TagString: Untagged
+  m_TagString: noteL
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -493,7 +493,7 @@ GameObject:
   - component: {fileID: 1303030280}
   m_Layer: 0
   m_Name: noteR
-  m_TagString: Untagged
+  m_TagString: noteR
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -703,6 +703,7 @@ GameObject:
   - component: {fileID: 1687798222}
   - component: {fileID: 1687798223}
   - component: {fileID: 1687798224}
+  - component: {fileID: 1687798225}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -817,3 +818,17 @@ MonoBehaviour:
   noteR: {fileID: 1303030276}
   skidL: {fileID: 1473505871}
   skidR: {fileID: 98606658}
+--- !u!114 &1687798225
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1687798218}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b0d9448ce83b12140a0de2ee036b5cdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  noteL: {fileID: 679037311}
+  noteR: {fileID: 1303030276}

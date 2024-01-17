@@ -238,7 +238,7 @@ public class drsParser : MonoBehaviour
                     skidY = ((float)point.point_time / 1000) - 5;
 
                     // spawn skid object
-                    GameObject skidInstance = Instantiate(skid, new Vector3(skidX, skidY, 5), Quaternion.identity); // skids are always behind
+                    GameObject skidInstance = Instantiate(note, new Vector3(skidX, skidY, 5), Quaternion.identity); // skids are always behind
                     skidInstance.transform.localScale = new Vector3(skidW, 0.1084799f, 1.644383f);
                     skidInstance.transform.SetParent(noteInstance.transform);
 
