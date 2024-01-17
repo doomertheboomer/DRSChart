@@ -11,6 +11,23 @@ public class drsExporter : MonoBehaviour
         double gradient = ((double)bpm / 100d) * 0.008d;
         return (int)((double)ms * gradient);
     }
+    static void sortNotes(List<GameObject> arr)
+    {
+        int n = arr.Count;
+        for (int i = 0; i < n - 1; i++)
+        {
+            for (int j = 0; j < n - i - 1; j++)
+            {
+                // Swap if the element found is greater than the next element
+                if (arr[j].transform.position.y > arr[j + 1].transform.position.y)
+                {
+                    GameObject temp = arr[j];
+                    arr[j] = arr[j + 1];
+                    arr[j + 1] = temp;
+                }
+            }
+        }
+    }
 
     private List<GameObject> notes = new List<GameObject>();
 
@@ -22,6 +39,7 @@ public class drsExporter : MonoBehaviour
             notes.AddRange(GameObject.FindGameObjectsWithTag("noteL"));
             notes.AddRange(GameObject.FindGameObjectsWithTag("noteR"));
 
+            sortNotes(notes);
 
             XmlWriterSettings settings = new XmlWriterSettings
             {
