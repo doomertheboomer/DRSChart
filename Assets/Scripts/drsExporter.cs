@@ -34,32 +34,62 @@ public class drsExporter : MonoBehaviour
             {
                 writer.WriteStartDocument();
                 writer.WriteStartElement("data");
+
                 writer.WriteStartElement("seq_version");
+                writer.WriteAttributeString("__type", "s32");
                 writer.WriteString("8");
                 writer.WriteEndElement();
 
                 writer.WriteStartElement("info");
+
                 writer.WriteStartElement("tick");
+                writer.WriteAttributeString("__type", "s32");
                 writer.WriteString("480");
                 writer.WriteEndElement();
 
                 writer.WriteStartElement("bpm_info");
                 writer.WriteStartElement("bpm");
+
+                string[] name = { "time", "delta_time", "bpm", "time", "delta_time", "num", "denomi" };
+                string[] value = { "0", "0", "69420", "0", "0", "4", "4" };
+
+                for (int i = 0; i < 3; i++)
+                {
+                    writer.WriteStartElement(name[i]);
+                    writer.WriteAttributeString("__type", "s32");
+                    writer.WriteString(value[i]);
+                    writer.WriteEndElement();
+                }
+                /*
                 writer.WriteElementString("time", "0");
                 writer.WriteElementString("delta_time", "0");
                 writer.WriteElementString("bpm", "69420");
-                writer.WriteEndElement();
+                */
                 writer.WriteEndElement();
                 writer.WriteEndElement();
 
                 writer.WriteStartElement("measure_info");
                 writer.WriteStartElement("measure");
+
+                for (int i = 3; i < value.Length; i++)
+                {
+                    writer.WriteStartElement(name[i]);
+                    writer.WriteAttributeString("__type", "s32");
+                    writer.WriteString(value[i]);
+                    writer.WriteEndElement();
+                }
+
+                /*
                 writer.WriteElementString("time", "0");
                 writer.WriteElementString("delta_time", "0");
                 writer.WriteElementString("num", "4");
                 writer.WriteElementString("denomi", "4");
+                */
+
                 writer.WriteEndElement();
                 writer.WriteEndElement();
+
+                writer.WriteEndElement(); // end info
 
                 writer.WriteStartElement("sequence_data");
                 foreach (GameObject go in notes)
@@ -81,6 +111,28 @@ public class drsExporter : MonoBehaviour
                     float pos_right = Mathf.Round(center + width);
                     float time_ms = Mathf.Round((1000f * go.transform.position.y) + 5000f);
 
+                    string[] names = { "stime_ms", "etime_ms", "stime_dt", "etime_dt", "category", "pos_left", "pos_right", "kind", "var", "player_id" };
+                    string[] values = { time_ms.ToString(), time_ms.ToString(), msToTick((int)time_ms, 69420).ToString(),
+                        msToTick((int)time_ms, 69420).ToString(), "0", pos_left.ToString(), pos_right.ToString(), "1", "0", "0"};
+
+                    for (int i = 0; i < 2; i++)
+                    {
+                        writer.WriteStartElement(names[i]);
+                        writer.WriteAttributeString("__type", "s64");
+                        writer.WriteString(values[i]);
+                        writer.WriteEndElement();
+                    }
+                    for (int i = 2; i < names.Length; i++)
+                    {
+                        writer.WriteStartElement(names[i]);
+                        writer.WriteAttributeString("__type", "s32");
+                        writer.WriteString(values[i]);
+                        writer.WriteEndElement();
+                    }
+
+                    writer.WriteEndElement();
+
+                    /*
                     writer.WriteElementString("stime_ms", time_ms.ToString());
                     writer.WriteElementString("etime_ms", time_ms.ToString());
                     writer.WriteElementString("stime_dt", msToTick((int)time_ms, 69420).ToString()); 
@@ -88,17 +140,14 @@ public class drsExporter : MonoBehaviour
                     writer.WriteElementString("category", "0");   
                     writer.WriteElementString("pos_left", pos_left.ToString());
                     writer.WriteElementString("pos_right", pos_right.ToString());
-                    writer.WriteElementString("kind", "1");      
-                    writer.WriteElementString("var", "0");      
+                    writer.WriteElementString("kind", "1");
+                    writer.WriteElementString("var", "0");
                     writer.WriteElementString("player_id", "0"); 
+                    */
 
                     Debug.Log("time_ms = " + time_ms + " pos_left = " + pos_left + " pos_right = " + pos_right);
-
-                    writer.WriteEndElement();
                 }
 
-                writer.WriteEndElement();
-                writer.WriteEndElement();
                 writer.WriteEndDocument();
             }
 
