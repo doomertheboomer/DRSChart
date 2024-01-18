@@ -34,7 +34,7 @@ public class drsExporter : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.S))
         {
             notes.AddRange(GameObject.FindGameObjectsWithTag("noteL"));
             notes.AddRange(GameObject.FindGameObjectsWithTag("noteR"));
@@ -170,7 +170,7 @@ public class drsExporter : MonoBehaviour
             }
 
             // Code to execute when the space key is pressed
-            Debug.Log("Space key pressed!");
+            Debug.Log("Chart exported to exported.xml!");
         }
     }
 }
