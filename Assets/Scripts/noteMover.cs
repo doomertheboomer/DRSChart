@@ -7,6 +7,7 @@ public class noteMover : MonoBehaviour
 {
     public bool isPoint;
     public bool isSkid;
+    public int kind = 0;
 
     // Start is called before the first frame update
     void Start()

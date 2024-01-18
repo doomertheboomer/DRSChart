@@ -78,11 +78,7 @@ public class drsExporter : MonoBehaviour
                     writer.WriteString(value[i]);
                     writer.WriteEndElement();
                 }
-                /*
-                writer.WriteElementString("time", "0");
-                writer.WriteElementString("delta_time", "0");
-                writer.WriteElementString("bpm", "69420");
-                */
+ 
                 writer.WriteEndElement();
                 writer.WriteEndElement();
 
@@ -97,13 +93,6 @@ public class drsExporter : MonoBehaviour
                     writer.WriteEndElement();
                 }
 
-                /*
-                writer.WriteElementString("time", "0");
-                writer.WriteElementString("delta_time", "0");
-                writer.WriteElementString("num", "4");
-                writer.WriteElementString("denomi", "4");
-                */
-
                 writer.WriteEndElement();
                 writer.WriteEndElement();
 
@@ -112,6 +101,11 @@ public class drsExporter : MonoBehaviour
                 writer.WriteStartElement("sequence_data");
                 foreach (GameObject go in notes)
                 {
+                    if (go.GetComponent<noteMover>().kind == 0)
+                    {
+                        continue; // skip holds
+                    } 
+
                     writer.WriteStartElement("step");
 
                     float center = ((43690.7f * go.transform.position.x) + 65536f) / 2f;
@@ -131,7 +125,7 @@ public class drsExporter : MonoBehaviour
 
                     string[] names = { "stime_ms", "etime_ms", "stime_dt", "etime_dt", "category", "pos_left", "pos_right", "kind", "var", "player_id" };
                     string[] values = { time_ms.ToString(), time_ms.ToString(), msToTick((int)time_ms, 69420).ToString(),
-                        msToTick((int)time_ms, 69420).ToString(), "0", pos_left.ToString(), pos_right.ToString(), "1", "0", "0"};
+                        msToTick((int)time_ms, 69420).ToString(), "0", pos_left.ToString(), pos_right.ToString(), go.GetComponent<noteMover>().kind.ToString(), "0", "0"};
 
                     for (int i = 0; i < 2; i++)
                     {
@@ -149,19 +143,6 @@ public class drsExporter : MonoBehaviour
                     }
 
                     writer.WriteEndElement();
-
-                    /*
-                    writer.WriteElementString("stime_ms", time_ms.ToString());
-                    writer.WriteElementString("etime_ms", time_ms.ToString());
-                    writer.WriteElementString("stime_dt", msToTick((int)time_ms, 69420).ToString()); 
-                    writer.WriteElementString("etime_dt", msToTick((int)time_ms, 69420).ToString()); 
-                    writer.WriteElementString("category", "0");   
-                    writer.WriteElementString("pos_left", pos_left.ToString());
-                    writer.WriteElementString("pos_right", pos_right.ToString());
-                    writer.WriteElementString("kind", "1");
-                    writer.WriteElementString("var", "0");
-                    writer.WriteElementString("player_id", "0"); 
-                    */
 
                     Debug.Log("time_ms = " + time_ms + " pos_left = " + pos_left + " pos_right = " + pos_right);
                 }

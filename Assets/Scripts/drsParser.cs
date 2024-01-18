@@ -213,6 +213,7 @@ public class drsParser : MonoBehaviour
         // create step note object
         GameObject noteInstance = Instantiate(note, new Vector3(posX, posY, step.kind), Quaternion.identity); // use note type as layering system
         noteInstance.transform.localScale = new Vector3(width, 0.1084799f, 1.644383f);
+        noteInstance.GetComponent<noteMover>().kind = step.kind;
 
         // check if note is a long note and render all longs
         if (step.category == 1 || step.long_point != null)
@@ -241,6 +242,7 @@ public class drsParser : MonoBehaviour
                     GameObject skidInstance = Instantiate(note, new Vector3(skidX, skidY, 5), Quaternion.identity); // skids are always behind
                     skidInstance.transform.localScale = new Vector3(skidW, 0.1084799f, 1.644383f);
                     skidInstance.transform.SetParent(noteInstance.transform);
+                    skidInstance.GetComponent<noteMover>().isSkid = true;
 
                     // render skid "stem"
                     float stemX = (((((float)point.pos_left + (float)point.pos_right) / 2f) / 65536f) * 3f) - 1.5f;
@@ -313,6 +315,7 @@ public class drsParser : MonoBehaviour
                     GameObject holdParent = Instantiate(note, new Vector3(holdX, holdY, 5), Quaternion.identity); // holds are always behind
                     holdParent.transform.localScale = new Vector3(holdWidth, 0.1084799f, 1.644383f);
                     holdParent.transform.SetParent(noteInstance.transform);
+                    holdParent.GetComponent<noteMover>().isPoint = true;
 
                     // spawn one note each 10ms for the illusion of a "drag"
                     for (float j = startTime; j <= endTime; j += 10f)
