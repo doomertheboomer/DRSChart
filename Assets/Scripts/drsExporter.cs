@@ -101,12 +101,10 @@ public class drsExporter : MonoBehaviour
                 writer.WriteStartElement("sequence_data");
                 foreach (GameObject go in notes)
                 {
-                    if (go.GetComponent<noteMover>().kind == 0)
+                    if (go.GetComponent<noteMover>().isPoint)
                     {
                         continue; // skip holds
                     } 
-
-                    writer.WriteStartElement("step");
 
                     float center = ((43690.7f * go.transform.position.x) + 65536f) / 2f;
                     float width = 0f;
@@ -121,11 +119,32 @@ public class drsExporter : MonoBehaviour
 
                     float pos_left = Mathf.Round(center - width);
                     float pos_right = Mathf.Round(center + width);
-                    float time_ms = Mathf.Round((1000f * go.transform.position.y) + 5000f);
+                    float stime_ms = Mathf.Round((1000f * go.transform.position.y) + 5000f);
+                    float etime_ms = Mathf.Round((1000f * go.transform.position.y) + 5000f);
+                    string category = "0";
+
+                    List<GameObject> long_points = new List<GameObject>();
+
+                    foreach (Transform tr in go.GetComponentsInChildren<Transform>())
+                    {
+                        if (tr.tag == "noteL" || tr.tag == "noteR")
+                        {
+                            long_points.Add(tr.gameObject);
+                        }
+                    }
+                    long_points.RemoveAt(0); // first object is the parent WHYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY
+                    sortNotes(long_points);
+
+                    if (long_points.Count > 0) { etime_ms = Mathf.Round((1000f * long_points[^1].transform.position.y) + 5000f); category = "1"; }
+
+                    Debug.Log("long_points: " + long_points.Count);
+
+                    // start writing step data
+                    writer.WriteStartElement("step");
 
                     string[] names = { "stime_ms", "etime_ms", "stime_dt", "etime_dt", "category", "pos_left", "pos_right", "kind", "var", "player_id" };
-                    string[] values = { time_ms.ToString(), time_ms.ToString(), msToTick((int)time_ms, 69420).ToString(),
-                        msToTick((int)time_ms, 69420).ToString(), "0", pos_left.ToString(), pos_right.ToString(), go.GetComponent<noteMover>().kind.ToString(), "0", "0"};
+                    string[] values = { stime_ms.ToString(), etime_ms.ToString(), msToTick((int)stime_ms, 69420).ToString(),
+                        msToTick((int)etime_ms, 69420).ToString(), category, pos_left.ToString(), pos_right.ToString(), go.GetComponent<noteMover>().kind.ToString(), "0", "0"};
 
                     for (int i = 0; i < 2; i++)
                     {
@@ -142,9 +161,70 @@ public class drsExporter : MonoBehaviour
                         writer.WriteEndElement();
                     }
 
+                    Debug.Log("time_ms = " + stime_ms + " pos_left = " + pos_left + " pos_right = " + pos_right);
+
+                    if (long_points.Count > 0)
+                    {
+                        writer.WriteStartElement("long_point");
+                        foreach (GameObject point in long_points)
+                        {
+                            if (point.GetComponent<noteMover>().isSkidEnd) { continue; } // ignore skid ends, they are not "points"
+                            if (point.GetComponent<noteMover>().isSkidStart) { continue; } // temporarily disable skids
+
+                            center = ((43690.7f * point.transform.position.x) + 65536f) / 2f;
+                            width = 0f;
+                            width = (point.transform.localScale.x * go.transform.localScale.x) * 209903.6765f;
+
+                            pos_left = Mathf.Round(center - width);
+                            pos_right = Mathf.Round(center + width);
+
+                            float pos_lend, pos_rend;
+
+                            if (point.GetComponent<noteMover>().isSkidStart)
+                            {
+                                center = ((43690.7f * point.GetComponent<noteMover>().skidEnd.transform.position.x) + 65536f) / 2f;
+                                width = 0f;
+                                if (go.transform.parent != null)
+                                {
+                                    width = (point.GetComponent<noteMover>().skidEnd.transform.localScale.x * point.GetComponent<noteMover>().skidEnd.transform.parent.localScale.x) * 209903.6765f;
+                                }
+                                else
+                                {
+                                    width = (point.GetComponent<noteMover>().skidEnd.transform.localScale.x) * 209903.6765f;
+                                }
+
+                                pos_lend = Mathf.Round(center - width);
+                                pos_rend = Mathf.Round(center + width);
+                            }
+
+                            float point_time = Mathf.Round((1000f * point.transform.position.y) + 5000f);
+
+                            string[] titles = { "point_time", "pos_left", "pos_right", "pos_lend", "pos_rend" };
+                            string[] content = { point_time.ToString(), pos_left.ToString(), pos_right.ToString() };
+
+                            writer.WriteStartElement("point");
+
+                            writer.WriteStartElement(titles[0]);
+                            writer.WriteAttributeString("__type", "s64");
+                            writer.WriteString(content[0]);
+                            writer.WriteEndElement();
+
+                            for (int i = 1; i < 3; i++)
+                            {
+                                writer.WriteStartElement(titles[i]);
+                                writer.WriteAttributeString("__type", "s32");
+                                writer.WriteString(content[i]);
+                                writer.WriteEndElement();
+                            }
+
+                            writer.WriteEndElement(); // end point
+
+                        }
+                        writer.WriteEndElement();
+                    }
+
                     writer.WriteEndElement();
 
-                    Debug.Log("time_ms = " + time_ms + " pos_left = " + pos_left + " pos_right = " + pos_right);
                 }
 
                 writer.WriteEndDocument();

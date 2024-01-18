@@ -258,6 +258,7 @@ public class drsParser : MonoBehaviour
                     GameObject endInstance = Instantiate(note, new Vector3(skidX, skidY, 5), Quaternion.identity);
                     endInstance.transform.localScale = new Vector3(skidW, 0.1084799f, 1.644383f);
                     endInstance.GetComponent<noteMover>().kind = step.kind;
+                    endInstance.GetComponent<noteMover>().isSkidEnd = true;
                     endInstance.GetComponent<noteMover>().isPoint = true;
                     endInstance.transform.SetParent(noteInstance.transform);
 
@@ -271,7 +272,7 @@ public class drsParser : MonoBehaviour
                     startInstance.transform.localScale = new Vector3(skidW, 0.1084799f, 1.644383f);
                     startInstance.GetComponent<noteMover>().kind = step.kind;
                     startInstance.GetComponent<noteMover>().isPoint = true;
-                    startInstance.GetComponent<noteMover>().isSkidEnd = true;
+                    startInstance.GetComponent<noteMover>().isSkidStart = true;
                     startInstance.GetComponent<noteMover>().skidEnd = endInstance;
                     startInstance.transform.SetParent(noteInstance.transform);
 
