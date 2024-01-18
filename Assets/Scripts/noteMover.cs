@@ -6,20 +6,10 @@ using UnityEngine;
 public class noteMover : MonoBehaviour
 {
     public bool isPoint;
-    public bool isSkid;
+    public bool isSkidStart;
+    public bool isSkidEnd;
+    public GameObject skidEnd;
     public int kind = 0;
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
 
     private bool isDragging = false;
     private Vector3 offset;
