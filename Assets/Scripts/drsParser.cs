@@ -186,6 +186,29 @@ public class drsParser : MonoBehaviour
 
     public List<step> stepList;
 
+    public void renderHold(float startTime, float endTime, float startL, float startR, float endL, float endR, GameObject prefab, GameObject parent)
+    {
+        // get L R position gradient
+        float lGrad = (endL - startL) / (endTime - startTime);
+        float rGrad = (endR - startR) / (endTime - startTime);
+
+        // spawn one note each 10ms for the illusion of a "drag"
+        for (float j = startTime; j <= endTime; j += 10f)
+        {
+            // calc L and R pos
+            float left = startL + lGrad * (j - startTime);
+            float right = startR + rGrad * (j - startTime);
+
+            // code duplicated from step alg
+            float holdX = ((((left + right) / 2f) / 65536f) * 3f) - 1.5f; // get center of note. lane is from -1.5 to 1.5
+            float holdY = (j / 1000f) - 5f; // where to spawn the note. lane is from -5 to 5
+            float holdWidth = 0.1561097f * Mathf.Abs((left - right) / 65536f); // get width of note in percentage then multiplied by constant
+
+            GameObject holdInstance = Instantiate(prefab, new Vector3(holdX, holdY, 6), Quaternion.identity); // holds are always behind
+            holdInstance.transform.localScale = new Vector3(holdWidth, 0.1084799f, 1.644383f);
+            holdInstance.transform.SetParent(parent.transform);
+        }
+    }
     public void renderStep(step step)
     {
         /*
@@ -303,36 +326,17 @@ public class drsParser : MonoBehaviour
                     // if its the last point, get parent step as ending time
                     if (i == (step.long_point.Count - 1)) { endTime = (float)step.etime_ms; }
 
-                    // get L R position gradient
-                    float lGrad = (endL - startL) / (endTime - startTime);
-                    float rGrad = (endR - startR) / (endTime - startTime);
-
                     // spawn hold head (final point). copied code from above
                     float holdX = ((((endL + endR) / 2f) / 65536f) * 3f) - 1.5f; // get center of note. lane is from -1.5 to 1.5 (simplified to y = (0.0000228882 * (step.pos_left + step.pos_right)) - 1.5)
                     float holdY = (endTime / 1000f) - 5f; // where to spawn the note. lane is from -5 to 5 (simplified to y = (0.001 * step.stime_ms) - 5
                     float holdWidth = 0.1561097f * Mathf.Abs((endL - endR) / 65536f); // get width of note in percentage then multiplied by constant (simplified to y = 0.00000238204498291 * width)
-                   
+
                     GameObject holdParent = Instantiate(note, new Vector3(holdX, holdY, 5), Quaternion.identity); // holds are always behind
                     holdParent.transform.localScale = new Vector3(holdWidth, 0.1084799f, 1.644383f);
                     holdParent.transform.SetParent(noteInstance.transform);
                     holdParent.GetComponent<noteMover>().isPoint = true;
 
-                    // spawn one note each 10ms for the illusion of a "drag"
-                    for (float j = startTime; j <= endTime; j += 10f)
-                    {
-                        // calc L and R pos
-                        float left = startL + lGrad * (j - startTime);
-                        float right = startR + rGrad * (j - startTime);
-
-                        // code duplicated from step alg
-                        holdX = ((((left + right) / 2f) / 65536f) * 3f) - 1.5f; // get center of note. lane is from -1.5 to 1.5
-                        holdY = (j / 1000f) - 5f; // where to spawn the note. lane is from -5 to 5
-                        holdWidth = 0.1561097f * Mathf.Abs((left - right) / 65536f); // get width of note in percentage then multiplied by constant
-
-                        GameObject holdInstance = Instantiate(skid, new Vector3(holdX, holdY, 6), Quaternion.identity); // holds are always behind
-                        holdInstance.transform.localScale = new Vector3(holdWidth, 0.1084799f, 1.644383f);
-                        holdInstance.transform.SetParent(holdParent.transform);
-                    }
+                    renderHold(startTime, endTime, startL, startR, endL, endR, skid, holdParent);
                 }
             }
         }
