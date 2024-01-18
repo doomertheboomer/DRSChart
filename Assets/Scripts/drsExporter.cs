@@ -169,7 +169,7 @@ public class drsExporter : MonoBehaviour
                         foreach (GameObject point in long_points)
                         {
                             if (point.GetComponent<noteMover>().isSkidEnd) { continue; } // ignore skid ends, they are not "points"
-                            if (point.GetComponent<noteMover>().isSkidStart) { continue; } // temporarily disable skids
+                            // if (point.GetComponent<noteMover>().isSkidStart) { continue; } // temporarily disable skids
 
                             center = ((43690.7f * point.transform.position.x) + 65536f) / 2f;
                             width = 0f;
@@ -178,29 +178,27 @@ public class drsExporter : MonoBehaviour
                             pos_left = Mathf.Round(center - width);
                             pos_right = Mathf.Round(center + width);
 
-                            float pos_lend, pos_rend;
+                            float pos_lend = 0; float pos_rend = 0;
 
+                            int pointAttributes = 3;
                             if (point.GetComponent<noteMover>().isSkidStart)
                             {
+                                Debug.Log("is a skid!");
+
                                 center = ((43690.7f * point.GetComponent<noteMover>().skidEnd.transform.position.x) + 65536f) / 2f;
                                 width = 0f;
-                                if (go.transform.parent != null)
-                                {
-                                    width = (point.GetComponent<noteMover>().skidEnd.transform.localScale.x * point.GetComponent<noteMover>().skidEnd.transform.parent.localScale.x) * 209903.6765f;
-                                }
-                                else
-                                {
-                                    width = (point.GetComponent<noteMover>().skidEnd.transform.localScale.x) * 209903.6765f;
-                                }
+                                width = (point.GetComponent<noteMover>().skidEnd.transform.localScale.x * go.transform.localScale.x * 209903.6765f);
 
                                 pos_lend = Mathf.Round(center - width);
                                 pos_rend = Mathf.Round(center + width);
+
+                                pointAttributes = 5;
                             }
 
                             float point_time = Mathf.Round((1000f * point.transform.position.y) + 5000f);
 
                             string[] titles = { "point_time", "pos_left", "pos_right", "pos_lend", "pos_rend" };
-                            string[] content = { point_time.ToString(), pos_left.ToString(), pos_right.ToString() };
+                            string[] content = { point_time.ToString(), pos_left.ToString(), pos_right.ToString(), pos_lend.ToString(), pos_rend.ToString() };
 
                             writer.WriteStartElement("point");
 
@@ -209,7 +207,7 @@ public class drsExporter : MonoBehaviour
                             writer.WriteString(content[0]);
                             writer.WriteEndElement();
 
-                            for (int i = 1; i < 3; i++)
+                            for (int i = 1; i < pointAttributes; i++)
                             {
                                 writer.WriteStartElement(titles[i]);
                                 writer.WriteAttributeString("__type", "s32");
