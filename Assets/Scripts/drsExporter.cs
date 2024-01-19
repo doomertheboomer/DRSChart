@@ -101,10 +101,7 @@ public class drsExporter : MonoBehaviour
                 writer.WriteStartElement("sequence_data");
                 foreach (GameObject go in notes)
                 {
-                    if (go.GetComponent<noteMover>().isPoint)
-                    {
-                        continue; // skip holds
-                    } 
+                    if (go.GetComponent<noteMover>().isPoint) { continue; } // skip holds
 
                     float center = ((43690.7f * go.transform.position.x) + 65536f) / 2f;
                     float width = 0f;
@@ -122,6 +119,8 @@ public class drsExporter : MonoBehaviour
                     float stime_ms = Mathf.Round((1000f * go.transform.position.y) + 5000f);
                     float etime_ms = Mathf.Round((1000f * go.transform.position.y) + 5000f);
                     string category = "0";
+
+                    if (stime_ms < 0f) { continue; } // skip prefabs under map
 
                     List<GameObject> long_points = new List<GameObject>();
 
