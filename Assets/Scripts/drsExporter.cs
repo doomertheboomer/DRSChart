@@ -69,7 +69,7 @@ public class drsExporter : MonoBehaviour
                 writer.WriteStartElement("bpm");
 
                 string[] name = { "time", "delta_time", "bpm", "time", "delta_time", "num", "denomi" };
-                string[] value = { "0", "0", "69420", "0", "0", "4", "4" };
+                string[] value = { "0", "0", "12500", "0", "0", "4", "4" };
 
                 for (int i = 0; i < 3; i++)
                 {
@@ -143,8 +143,8 @@ public class drsExporter : MonoBehaviour
                     writer.WriteStartElement("step");
 
                     string[] names = { "stime_ms", "etime_ms", "stime_dt", "etime_dt", "category", "pos_left", "pos_right", "kind", "var", "player_id" };
-                    string[] values = { stime_ms.ToString(), etime_ms.ToString(), msToTick((int)stime_ms, 69420).ToString(),
-                        msToTick((int)etime_ms, 69420).ToString(), category, pos_left.ToString(), pos_right.ToString(), go.GetComponent<noteMover>().kind.ToString(), "0", "0"};
+                    string[] values = { stime_ms.ToString(), etime_ms.ToString(), msToTick((int)stime_ms, 12500).ToString(),
+                        msToTick((int)etime_ms, 12500).ToString(), category, pos_left.ToString(), pos_right.ToString(), go.GetComponent<noteMover>().kind.ToString(), "0", "0"};
 
                     for (int i = 0; i < 2; i++)
                     {
