@@ -225,6 +225,8 @@ public class drsExporter : MonoBehaviour
                 }
 
                 writer.WriteEndDocument();
+
+                notes.Clear();
             }
 
             // Code to execute when the space key is pressed
